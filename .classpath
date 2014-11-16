@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="lib" path="org.eclipse.emf.ecore.jar"/>
+	<classpathentry kind="lib" path="org.eclipse.emf.ecore 2.jar"/>
+	<classpathentry kind="src" path="seg.jUCMNav/src"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/core.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/itext-2.0.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/JaCoP-3.0-final.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/jaxb-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/jdom.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/jsr173_1.0_api.jar"/>
+	<classpathentry exported="true" kind="lib" path="seg.jUCMNav/lib/meval.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
