@@ -1,6 +1,7 @@
 package ecsce429BlackBox;
 
 import static org.junit.Assert.*;
+import grl.Evaluation;
 import grl.EvaluationStrategy;
 import grl.GRLGraph;
 import grl.GRLNode;
@@ -17,6 +18,8 @@ import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.HashMap;
 
 import junit.framework.TestCase;
 
@@ -53,10 +56,16 @@ import urncore.IURNNode;
 
 public class FeatureModelStrategyAlgorithmTest extends TestCase  
 {
+	
+    private static String externalTestProjectPath="C:\\Users\\Bernie\\workspace\\testjucm";
+    private static String testProjectName="testjucm";
+    private static String testFileName="FRM.jucm";
+	
 	private static UCMNavMultiPageEditor editor;
     private static EList<IURNDiagram> diagrams;
     private static EList<EvaluationStrategy> strategies;
-	
+    private static EvaluationStrategyManager evalStrMan;
+
 	private CommandStack cs;
 
     private URNspec urnspec;
@@ -73,32 +82,33 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
 			//getting workspace
 			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 			//getting project, if it exists 
-			IProject testproject = workspaceRoot.getProject("testjucm"); //$NON-NLS-1$
+			IProject testproject = workspaceRoot.getProject(testProjectName); //$NON-NLS-1$
 			
 			//if it does not exists create it 
 			if (!testproject.exists())
 	            testproject.create(null);
 			
 			//File location of external test project 
-			File externalProject = new File("C:\\Users\\Bernie\\workspace\\testjucm");
-	        File workspaceProject = new File("C:\\Users\\Bernie\\junit-workspace\\testjucm");
+			File externalProject = new File(externalTestProjectPath);
+	        File workspaceProject = new File(workspaceRoot.getFullPath()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
 	        
 	        //copy contents of external test project into newly created one(work around for eclipse not finding projects just copied into workspace)
 	        copyFolder(externalProject, workspaceProject);
 
 	        //refresh project just to reset everything
 	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-	        IFile testfile = testproject.getFile("FRM.jucm");			
+	        IFile testfile = testproject.getFile(testProjectName);			
 
 	        if (!testproject.isOpen())
 	            testproject.open(null);  
 	        
+	        evalStrMan = EvaluationStrategyManager.getInstance();
 	        //get page, descriptor and editor 
 	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
 	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
 	        diagrams = editor.getModel().getUrndef().getSpecDiagrams();
-	       strategies = editor.getModel().getGrlspec().getStrategies();
+	        strategies = editor.getModel().getGrlspec().getStrategies();
 	      
 		}
 		catch (Exception e) 
@@ -124,55 +134,61 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
 	{
 		try 
 		{
-//			//getting workspace
-//			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-//			//getting project, if it exists 
-//			IProject testproject = workspaceRoot.getProject("testjucm"); //$NON-NLS-1$
-//			
-//			//if it does not exists create it 
-//			if (!testproject.exists())
-//	            testproject.create(null);
-//			
-//			//File location of external test project 
-//			File externalProject = new File("C:\\Users\\Bernie\\workspace\\testjucm");
-//	        File workspaceProject = new File("C:\\Users\\Bernie\\junit-workspace\\testjucm");
-//	        
-//	        //copy contents of external test project into newly created one(work around for eclipse not finding projects just copied into workspace)
-//	        copyFolder(externalProject, workspaceProject);
-//
-//	        //refresh project just to reset everything
-//	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-//	        IFile testfile = testproject.getFile("FRM.jucm");			
-//
-//	        if (!testproject.isOpen())
-//	            testproject.open(null);  
-//	        
-//	        //get page, descriptor and editor 
-//	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-//	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
-//	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
-//
-//	       EList<EvaluationStrategy> strategies = editor.getModel().getGrlspec().getStrategies();
-//	       EList<IURNDiagram> diagrams = editor.getModel().getUrndef().getSpecDiagrams();
-	
+			//getting workspace
+			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+			//getting project, if it exists 
+			IProject testproject = workspaceRoot.getProject(testProjectName); //$NON-NLS-1$
 			
-			EvaluationStrategyManager.getInstance().setStrategy(strategies.get(0));
-	       EvaluationStrategyManager.getInstance().calculateEvaluation();
-	       
-	       for (IURNDiagram gram : diagrams) 
-	       {
-	    	 EList<GRLNode> nodes =  gram.getNodes();
-	    	 //EList<IURNNode> nodes =  gram.getNodes();
-	    	 //EList<IURNConnection> cons = gram.getConnections();
-	    	 EList<LinkRef>cons = gram.getConnections();
-	       }
-	       //GRLNode nodes = (GRLNode) dias.getNodes();
-	       //LinkRef links = (LinkRef) dias.getConnections();
-	        // cs = new CommandStack();
-	       cs = editor.getDelegatingCommandStack();
+			//if it does not exists create it 
+			if (!testproject.exists())
+	            testproject.create(null);
+			
+			//File location of external test project 
+			File externalProject = new File(externalTestProjectPath);
+	        File workspaceProject = new File(workspaceRoot.getRawLocation().toString()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
 	        
+	        //copy contents of external test project into newly created one(work around for eclipse not finding projects just copied into workspace)
+	        copyFolder(externalProject, workspaceProject);
+
+	        //refresh project just to reset everything
+	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+	        IFile testfile = testproject.getFile(testFileName);			
+
+	        if (!testproject.isOpen())
+	            testproject.open(null);  
+	        
+	        //get page, descriptor and editor 
+	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
+	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
+	       
+	        diagrams = editor.getModel().getUrndef().getSpecDiagrams();
+	        strategies = editor.getModel().getGrlspec().getStrategies();
 			
+	        evalStrMan = EvaluationStrategyManager.getInstance();
+	        
+	        
+			//this should recalculate all values 
+			evalStrMan.setStrategy(strategies.get(0));
 			
+	       //look at evalution strategy to see where the evaluatons arw stored
+			HashMap evals = evalStrMan.getEvaluations();
+			
+			Collection keys = evals.keySet();
+			Collection vals = evals.values();
+			
+	       
+		       for (IURNDiagram gram : diagrams) 
+		       {
+		    	 EList<GRLNode> nodes =  gram.getNodes();
+		    	 //EList<IURNNode> nodes =  gram.getNodes();
+		    	 //EList<IURNConnection> cons = gram.getConnections();
+		    	 EList<LinkRef>cons = gram.getConnections();
+		       }
+		       //GRLNode nodes = (GRLNode) dias.getNodes();
+		       //LinkRef links = (LinkRef) dias.getConnections();
+		        // cs = new CommandStack();
+		       cs = editor.getDelegatingCommandStack();
 		}
 		catch (Exception e) {
 			// TODO: handle exception
