@@ -1,11 +1,13 @@
 package ecsce429BlackBox;
 
 import static org.junit.Assert.*;
+import fm.impl.FeatureImpl;
 import grl.Evaluation;
 import grl.EvaluationStrategy;
 import grl.GRLGraph;
 import grl.GRLNode;
 import grl.LinkRef;
+import grl.impl.EvaluationImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -33,7 +35,10 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CommandStack;
+import org.eclipse.jface.preference.IPreferenceNode;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
@@ -47,6 +52,7 @@ import seg.jUCMNav.editors.UCMNavMultiPageEditor;
 import seg.jUCMNav.model.commands.create.CreateGrlGraphCommand;
 import seg.jUCMNav.model.commands.delete.DeleteMapCommand;
 import seg.jUCMNav.strategies.EvaluationStrategyManager;
+import seg.jUCMNav.views.preferences.StrategyEvaluationPreferences;
 import ucm.map.UCMmap;
 import urn.URNspec;
 import urncore.IURNConnection;
@@ -54,7 +60,7 @@ import urncore.IURNDiagram;
 import urncore.IURNNode;
 
 
-public class FeatureModelStrategyAlgorithmTest extends TestCase  
+public class FeatureModelStrategyAlgorithmTest  
 {
 	
     private static String externalTestProjectPath="C:\\Users\\Bernie\\workspace\\testjucm";
@@ -65,6 +71,9 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
     private static EList<IURNDiagram> diagrams;
     private static EList<EvaluationStrategy> strategies;
     private static EvaluationStrategyManager evalStrMan;
+    private static HashMap<String, EvaluationStrategy> strategyMap;
+    
+    private static String[] test1NodeNames={"name","name2"};
 
 	private CommandStack cs;
 
@@ -77,8 +86,14 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception 
 	{
+
 		try 
 		{
+			IWorkbench wb = PlatformUI.getWorkbench();
+			
+			IPreferenceStore a = wb.getPreferenceStore();
+			String b = a.getString("PREF_ALGORITHM");//i have no idea what going on here and how to set this 
+			
 			//getting workspace
 			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 			//getting project, if it exists 
@@ -90,26 +105,32 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
 			
 			//File location of external test project 
 			File externalProject = new File(externalTestProjectPath);
-	        File workspaceProject = new File(workspaceRoot.getFullPath()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
+	        File workspaceProject = new File(workspaceRoot.getRawLocation()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
 	        
 	        //copy contents of external test project into newly created one(work around for eclipse not finding projects just copied into workspace)
 	        copyFolder(externalProject, workspaceProject);
 
 	        //refresh project just to reset everything
 	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-	        IFile testfile = testproject.getFile(testProjectName);			
+	        IFile testfile = testproject.getFile(testFileName);			
 
 	        if (!testproject.isOpen())
 	            testproject.open(null);  
 	        
-	        evalStrMan = EvaluationStrategyManager.getInstance();
+	        
 	        //get page, descriptor and editor 
 	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
 	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
 	        diagrams = editor.getModel().getUrndef().getSpecDiagrams();
 	        strategies = editor.getModel().getGrlspec().getStrategies();
+	        evalStrMan = EvaluationStrategyManager.getInstance();
 	      
+	        strategyMap = new HashMap<String, EvaluationStrategy>();
+	        for (EvaluationStrategy str : strategies) 
+	        {
+				strategyMap.put(str.getName(), str);
+			}
 		}
 		catch (Exception e) 
 		{
@@ -133,62 +154,27 @@ public class FeatureModelStrategyAlgorithmTest extends TestCase
 	public void test1() 
 	{
 		try 
-		{
-			//getting workspace
-			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-			//getting project, if it exists 
-			IProject testproject = workspaceRoot.getProject(testProjectName); //$NON-NLS-1$
+		{  
+			EvaluationStrategy str = strategyMap.get("name");
+		    evalStrMan.setStrategy(str);   
+		    HashMap evals = evalStrMan.getEvaluations();
+			Collection vals = evals.values();//EvaluationImpl
+			Collection keys = evals.keySet();//FeatureImpl
+			Object[] features =  keys.toArray();
+			Object[] evalsArray = vals.toArray();
 			
-			//if it does not exists create it 
-			if (!testproject.exists())
-	            testproject.create(null);
-			
-			//File location of external test project 
-			File externalProject = new File(externalTestProjectPath);
-	        File workspaceProject = new File(workspaceRoot.getRawLocation().toString()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
-	        
-	        //copy contents of external test project into newly created one(work around for eclipse not finding projects just copied into workspace)
-	        copyFolder(externalProject, workspaceProject);
+			HashMap<String,FeatureImpl> featureMap= new HashMap<String, FeatureImpl>();
+			for(int i =0 ; i<features.length;i++)
+			{
+				FeatureImpl f = (FeatureImpl)features[i];
+				featureMap.put(f.getName(),f );
+			}
 
-	        //refresh project just to reset everything
-	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-	        IFile testfile = testproject.getFile(testFileName);			
+			EvaluationImpl evalOfFeature97 = (EvaluationImpl) evals.get(featureMap.get("Feature97"));
+			int sv = evalOfFeature97.getEvaluation();
+			assertEquals(sv, 100);
+			
 
-	        if (!testproject.isOpen())
-	            testproject.open(null);  
-	        
-	        //get page, descriptor and editor 
-	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
-	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
-	       
-	        diagrams = editor.getModel().getUrndef().getSpecDiagrams();
-	        strategies = editor.getModel().getGrlspec().getStrategies();
-			
-	        evalStrMan = EvaluationStrategyManager.getInstance();
-	        
-	        
-			//this should recalculate all values 
-			evalStrMan.setStrategy(strategies.get(0));
-			
-	       //look at evalution strategy to see where the evaluatons arw stored
-			HashMap evals = evalStrMan.getEvaluations();
-			
-			Collection keys = evals.keySet();
-			Collection vals = evals.values();
-			
-	       
-		       for (IURNDiagram gram : diagrams) 
-		       {
-		    	 EList<GRLNode> nodes =  gram.getNodes();
-		    	 //EList<IURNNode> nodes =  gram.getNodes();
-		    	 //EList<IURNConnection> cons = gram.getConnections();
-		    	 EList<LinkRef>cons = gram.getConnections();
-		       }
-		       //GRLNode nodes = (GRLNode) dias.getNodes();
-		       //LinkRef links = (LinkRef) dias.getConnections();
-		        // cs = new CommandStack();
-		       cs = editor.getDelegatingCommandStack();
 		}
 		catch (Exception e) {
 			// TODO: handle exception
