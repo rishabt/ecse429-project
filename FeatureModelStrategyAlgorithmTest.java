@@ -1,6 +1,7 @@
 package ecsce429BlackBox;
 
 import static org.junit.Assert.*;
+import fm.impl.FeatureDiagramImpl;
 import fm.impl.FeatureImpl;
 import grl.Evaluation;
 import grl.EvaluationStrategy;
@@ -8,6 +9,7 @@ import grl.GRLGraph;
 import grl.GRLNode;
 import grl.LinkRef;
 import grl.impl.EvaluationImpl;
+import grl.impl.LinkRefImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -48,6 +50,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import seg.jUCMNav.JUCMNavPlugin;
 import seg.jUCMNav.editors.UCMNavMultiPageEditor;
 import seg.jUCMNav.model.commands.create.CreateGrlGraphCommand;
 import seg.jUCMNav.model.commands.delete.DeleteMapCommand;
@@ -72,8 +75,9 @@ public class FeatureModelStrategyAlgorithmTest
     private static EList<EvaluationStrategy> strategies;
     private static EvaluationStrategyManager evalStrMan;
     private static HashMap<String, EvaluationStrategy> strategyMap;
+    private static HashMap<String, FeatureDiagramImpl> diagramMap;
     
-    private static String[] test1NodeNames={"name","name2"};
+    private static String[] test1NodeNames={"Feature97","Feature110","Feature103"};
 
 	private CommandStack cs;
 
@@ -90,10 +94,15 @@ public class FeatureModelStrategyAlgorithmTest
 		try 
 		{
 			IWorkbench wb = PlatformUI.getWorkbench();
+			IPreferenceStore pref = JUCMNavPlugin.getDefault().getPreferenceStore();
+			String algo = pref.getString(StrategyEvaluationPreferences.PREF_ALGORITHM);
+			pref.setValue(StrategyEvaluationPreferences.PREF_ALGORITHM, StrategyEvaluationPreferences.FEATURE_MODEL_ALGORITHM+"");
+			pref.setValue(StrategyEvaluationPreferences.PREF_TOLERANCE, 0);
+			pref.setValue(StrategyEvaluationPreferences.PREF_AUTOSELECTMANDATORYFEATURES, true);
 			
-			IPreferenceStore a = wb.getPreferenceStore();
-			String b = a.getString("PREF_ALGORITHM");//i have no idea what going on here and how to set this 
-			
+			//			IPreferenceStore a = wb.getPreferenceStore();
+//			String b = a.getString("PREF_ALGORITHM");//i have no idea what going on here and how to set this 
+//			 wb.getPreferenceStore().setValue(PREF_ALGORITHM, b);
 			//getting workspace
 			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 			//getting project, if it exists 
@@ -131,6 +140,22 @@ public class FeatureModelStrategyAlgorithmTest
 	        {
 				strategyMap.put(str.getName(), str);
 			}
+	        
+	        diagramMap = new HashMap<String, FeatureDiagramImpl>();
+	        for (IURNDiagram gram : diagrams) 
+	        {
+	        	FeatureDiagramImpl dia =(FeatureDiagramImpl)gram;
+	        	
+				diagramMap.put(dia.getName(), dia);
+				EList link = dia.getConnections();
+				//LinkRefImpl lin;
+				//lin.getLink().get
+				//.MandatoryFMLinkImpl
+				//DecompositionImpl
+				//OptionalFMLinkImpl
+				
+				
+			}
 		}
 		catch (Exception e) 
 		{
@@ -158,7 +183,10 @@ public class FeatureModelStrategyAlgorithmTest
 			EvaluationStrategy str = strategyMap.get("name");
 		    evalStrMan.setStrategy(str);   
 		    HashMap evals = evalStrMan.getEvaluations();
-			Collection vals = evals.values();//EvaluationImpl
+		    FeatureDiagramImpl dia = diagramMap.get("FeatureDiagram96");
+		    EList nodes = dia.getNodes();
+		    
+		    Collection vals = evals.values();//EvaluationImpl
 			Collection keys = evals.keySet();//FeatureImpl
 			Object[] features =  keys.toArray();
 			Object[] evalsArray = vals.toArray();
@@ -167,10 +195,21 @@ public class FeatureModelStrategyAlgorithmTest
 			for(int i =0 ; i<features.length;i++)
 			{
 				FeatureImpl f = (FeatureImpl)features[i];
+				
 				featureMap.put(f.getName(),f );
 			}
 
-			EvaluationImpl evalOfFeature97 = (EvaluationImpl) evals.get(featureMap.get("Feature97"));
+			FeatureImpl F121 =featureMap.get("Feature76");
+			
+			evalStrMan.getEvaluation(F121);
+			
+			
+			//EList meta = editor.getModel().getUrndef().getUrnspec().getMetadata();
+	        
+			EList meta = F121.getMetadata();//this works
+			//_userSetEvaluationWarning
+			//_autoSelected
+			EvaluationImpl evalOfFeature97 = (EvaluationImpl) evals.get(F121);
 			int sv = evalOfFeature97.getEvaluation();
 			assertEquals(sv, 100);
 			
