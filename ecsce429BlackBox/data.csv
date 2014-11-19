@@ -1,0 +1,14 @@
+Feature26,100,green,none
+Feature24,100,green,none,Feature25,100,green,none
+Feature22,100,green,none,Feature23,100,green,none
+Feature20,100,green,none,Feature21,100,green,none
+Feature5,100,green,none,Feature7,0,grey,none,Feature6,0,grey,none
+Feature5,100,green,none,Feature7,100,green,none,Feature6,0,grey,none
+Feature5,100,green,none,Feature6,100,green,none,Feature7,100,green,none
+Feature1,100,green,none,Feature4,100,green,none,Feature2,100,green,_userSetEvaluationWarning
+Feature8,100,green,none,Feature9,100,green,none,Feature10,0,grey,none
+Feature8,100,green,none,Feature9,100,green,none,Feature10,100,green,none
+Feature17,100,green,none,Feature18,100,green,none,Feature19,100,green,none
+Feature14,0,yellow,none,Feature15,0,grey,none,Feature16,0,grey,none
+Feature14,100,green,none,Feature15,100,green,none,Feature16,0,grey,none
+Feature14,100,green,none,Feature15,100,green,none,Feature16,100,green,none
