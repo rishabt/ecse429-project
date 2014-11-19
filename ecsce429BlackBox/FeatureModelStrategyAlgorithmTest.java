@@ -10,9 +10,11 @@ import grl.Evaluation;
 import grl.EvaluationStrategy;
 import grl.GRLGraph;
 import grl.GRLNode;
+import grl.IntentionalElement;
 import grl.LinkRef;
 import grl.impl.DecompositionImpl;
 import grl.impl.EvaluationImpl;
+import grl.impl.IntentionalElementImpl;
 import grl.impl.LinkRefImpl;
 
 import java.io.ByteArrayInputStream;
@@ -46,6 +48,7 @@ import org.eclipse.gef.commands.CommandStack;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
@@ -75,8 +78,8 @@ import urncore.IURNNode;
 public class FeatureModelStrategyAlgorithmTest  
 {
 	
-	private static String externalTestProjectPath="C:\\Users\\Bernie\\workspace\\testjucm";
-    private static String testProjectName="testjucm";
+	private static String externalTestProjectPath="C:\\Users\\Bernie\\workspace\\TestSuite";
+    private static String testProjectName="TestSuite";
     private static String testFileName="testcases.jucm";
 	
 	private static UCMNavMultiPageEditor editor;
@@ -88,6 +91,8 @@ public class FeatureModelStrategyAlgorithmTest
     private static HashMap<String,FeatureImpl> featureMap;
     private static HashMap<String, OptionalFMLinkImpl> optionalLinkMap;
     private static HashMap<String,MandatoryFMLinkImpl > mandatoryLinkMap;
+    private static HashMap<String,IntentionalElementImpl > intentionalElementMap;
+    private static IEditorPart ed;
     private static URNspec urn;
 
     boolean testBindings;
@@ -116,6 +121,11 @@ public class FeatureModelStrategyAlgorithmTest
 			if (!testproject.exists())
 	            testproject.create(null);
 			
+			if (!testproject.isOpen())
+	            testproject.open(null);  
+			
+			IFile testfile = testproject.getFile(testFileName);
+			testfile.create(new ByteArrayInputStream("".getBytes()), false, null);
 			//File location of external test project 
 			File externalProject = new File(externalTestProjectPath);
 	        File workspaceProject = new File(workspaceRoot.getRawLocation()+"\\"+testProjectName);//"C:\\Users\\Bernie\\junit-workspace\\testjucm");
@@ -125,16 +135,14 @@ public class FeatureModelStrategyAlgorithmTest
 
 	        //refresh project just to reset everything
 	        testproject.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-	        IFile testfile = testproject.getFile(testFileName);			
-
-	        if (!testproject.isOpen())
-	            testproject.open(null);  
-	        
 	        
 	        //get page, descriptor and editor 
 	        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 	        IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(testfile.getName());
-	        editor = (UCMNavMultiPageEditor) page.openEditor(new FileEditorInput(testfile), desc.getId());
+	        ed = page.openEditor(new FileEditorInput(testfile), desc.getId());
+	        editor = (UCMNavMultiPageEditor) ed;
+	       
+	        
 	        urn = editor.getModel().getGrlspec().getUrnspec();
 	        
 	        
@@ -162,11 +170,19 @@ public class FeatureModelStrategyAlgorithmTest
 			Object[] evalsArray = vals.toArray();
 			
 			featureMap= new HashMap<String, FeatureImpl>();
+			intentionalElementMap= new HashMap<String, IntentionalElementImpl>();
 			for(int i =0 ; i<features.length;i++)
 			{
-				FeatureImpl f = (FeatureImpl)features[i];
-				String color = f.getFillColor();
-				featureMap.put(f.getName(),f );
+				if(features[i] instanceof FeatureImpl )
+				{
+					FeatureImpl f = (FeatureImpl)features[i];
+					featureMap.put(f.getName(),f );
+				}
+				else if(features[i] instanceof IntentionalElementImpl)
+				{
+					IntentionalElementImpl element = (IntentionalElementImpl)features[i];
+					intentionalElementMap.put(element.getName(), element);
+				}
 			}
 			
 	        
@@ -184,7 +200,7 @@ public class FeatureModelStrategyAlgorithmTest
 					if(linker instanceof DecompositionImpl)
 					{
 						
-					}
+					}	
 					if(linker instanceof OptionalFMLinkImpl)
 					{
 						OptionalFMLinkImpl l = (OptionalFMLinkImpl)linker;
@@ -204,64 +220,6 @@ public class FeatureModelStrategyAlgorithmTest
 		}
 	}
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
-
-//	@Test
-//	public void tryingTest() 
-//	{
-//		try 
-//		{  
-//			EvaluationStrategy str = strategyMap.get("name");
-//		    evalStrMan.setStrategy(str);
-//		    HashMap evals = evalStrMan.getEvaluations();
-//		    FeatureDiagramImpl dia = diagramMap.get("FeatureDiagram96");
-//		    EList nodes = dia.getNodes();
-//		    
-//		    Collection vals = evals.values();//EvaluationImpl
-//			Collection keys = evals.keySet();//FeatureImpl
-//			Object[] features =  keys.toArray();
-//			Object[] evalsArray = vals.toArray();
-//			
-//			HashMap<String,FeatureImpl> featureMap= new HashMap<String, FeatureImpl>();
-//			for(int i =0 ; i<features.length;i++)
-//			{
-//				FeatureImpl f = (FeatureImpl)features[i];
-//				String color = f.getFillColor();
-//				featureMap.put(f.getName(),f );
-//			}
-//
-//			FeatureImpl F121 =featureMap.get("Feature76");
-//			
-//			evalStrMan.getEvaluation(F121);
-//			
-//			
-//			//EList meta = editor.getModel().getUrndef().getUrnspec().getMetadata();
-//	        
-//			EList meta = F121.getMetadata();//this works
-//			//_userSetEvaluationWarning
-//			//_autoSelected
-//			EvaluationImpl evalOfFeature97 = (EvaluationImpl) evals.get(F121);
-//			int sv = evalOfFeature97.getEvaluation();
-//			assertEquals(sv, 100);
-//			
-//
-//		}
-//		catch (Exception e) {
-//			// TODO: handle exception
-//			fail();
-//		}
-//	}
-
 	@Test
 	public void test1()
 	{
@@ -272,80 +230,2208 @@ public class FeatureModelStrategyAlgorithmTest
 		    evalStrMan.setStrategy(str);
 
 		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[0]);
-		    
-//		    GrlGraphicalEditPartFactory fac = new GrlGraphicalEditPartFactory(dia);
-//		    EditPart refresher = fac.createEditPart((EditPart) editor, editor.getModel());
-//		    refresher.refresh();
-		    
+
 		    HashMap evals = evalStrMan.getEvaluations();
-		    ArrayList<Boolean> resultsNodes = new ArrayList<Boolean>(); 
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
 			for(int i =0; i < TestData.testCaseNodes[0].length;i++)
 			{
 				if(TestData.testCaseNodes[0][i]==null)
 					break;
 					
 				FeatureImpl f =featureMap.get(TestData.testCaseNodes[0][i]);
-				evalStrMan.getEvaluation(f);
+				
+				
+				boolean ig =evalStrMan.isIgnored(f);
 				EvaluationImpl e = (EvaluationImpl) evals.get(f);
 				int sv = e.getEvaluation();
-				String color = f.getFillColor();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
 				EList meta = f.getMetadata();
 				
-				boolean r =Integer.parseInt(TestData.expectedValuesForNodes.get(0).get(f.getName())[0])==sv;
-				boolean r2;
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(0).get(f.getName())[0])==sv;
+				boolean colorResult;
 				if(color==null)
-					r2=false;
+					colorResult=false;
 				else
-					r2 = color.equals(TestData.expectedValuesForNodes.get(0).get(f.getName())[1]);
-				resultsNodes.add(r);
-				resultsNodes.add(r2);
-				boolean r3;
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(0).get(f.getName())[1]);
+				
+				boolean warningResult;
 				
 				if(meta.size()<3)
 				{
-					r3=TestData.expectedValuesForNodes.get(0).get(f.getName())[2].equals("none");
-					resultsNodes.add(r3);
+					warningResult=TestData.expectedValuesForNodes.get(0).get(f.getName())[2].equals("none");
 					//assertEquals("none", TestData.expectedValuesForNodes.get(0).get(f.getName())[2]);
 					
 				}
 				else
 				{
 					String val= (String) meta.get(3);
-					r3= TestData.expectedValuesForNodes.get(0).get(f.getName())[2].equals(val);
-					resultsNodes.add(r3);
+					warningResult= TestData.expectedValuesForNodes.get(0).get(f.getName())[2].equals(val);
 					//assertEquals(val, TestData.expectedValuesForNodes.get(0).get(f.getName())[2]);
 					
 				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
 				//_userSetEvaluationWarning
 				
 			}
-			ArrayList<Boolean> resultsLinks = new ArrayList<Boolean>(); 
+			 
 			for(int i=0; i<TestData.testCaseLinks[0].length;i++)
 			{
+				boolean contributionValueResult;
 				if(TestData.testCaseLinks[0][i]==null)
 					break;
 				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[0][i]))
 				{
 					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[0][i]);
 					//assertEquals(l.getQuantitativeContribution(),TestData.expectedValuesForNodes.get(0).get(l.getName()));
-					boolean r= TestData.expectedValuesForNodes.get(0).get(l.getName()).equals(l.getQuantitativeContribution());
-					resultsLinks.add(r);
+					contributionValueResult= TestData.expectedValuesForLinks.get(0).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
 				}
 				if(optionalLinkMap.containsKey(TestData.testCaseLinks[0][i]))
 				{
 					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[0][i]);
-					boolean r = TestData.expectedValuesForNodes.get(0).get(l.getName()).equals(l.getQuantitativeContribution());
-					resultsLinks.add(r);
+					contributionValueResult = TestData.expectedValuesForLinks.get(0).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
 					//assertEquals(l.getQuantitativeContribution(),TestData.expectedValuesForNodes.get(0).get(l.getName()));
 				}
 			}
 		
-			for (Boolean boolean1 : resultsLinks) {
-				assertTrue(boolean1);
+			boolean pass = true;
+			System.out.println("Results for test # "+"1");
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
 			}
-			for (Boolean boolean1 : resultsNodes) {
-				assertTrue(boolean1);
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
 			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test2()
+	{
+		try
+		{
+			int testCaseIndex=1;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()<3)
+				{
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");	
+				}
+				else
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);	
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			System.out.println("Results for test # "+testCaseIndex+1);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test3()
+	{
+		try
+		{
+			int testCaseIndex=2;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test4()
+	{
+		try
+		{
+			int testCaseIndex=3;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test5()
+	{
+		try
+		{
+			int testCaseIndex=4;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test6()
+	{
+		try
+		{
+			int testCaseIndex=5;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test7()
+	{
+		try
+		{
+			int testCaseIndex=6;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test8()
+	{
+		try
+		{
+			int testCaseIndex=7;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test9()
+	{
+		try
+		{
+			int testCaseIndex=8;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test10()
+	{
+		try
+		{
+			int testCaseIndex=9;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test11()
+	{
+		try
+		{
+			int testCaseIndex=10;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test12()
+	{
+		try
+		{
+			int testCaseIndex=11;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test13()
+	{
+		try
+		{
+			int testCaseIndex=12;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test14()
+	{
+		try
+		{
+			int testCaseIndex=13;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test15()
+	{
+		try
+		{
+			int testCaseIndex=14;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test16()
+	{
+		try
+		{
+			int testCaseIndex=15;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+
+	@Test
+	public void test17()
+	{
+		try
+		{
+			int testCaseIndex=16;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test18()
+	{
+		try
+		{
+			int testCaseIndex=17;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test19()
+	{
+		try
+		{
+			int testCaseIndex=18;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test20()
+	{
+		try
+		{
+			int testCaseIndex=19;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+					
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				
+				boolean ig =evalStrMan.isIgnored(f);
+				EvaluationImpl e = (EvaluationImpl) evals.get(f);
+				int sv = e.getEvaluation();
+				String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+			    String color = getColorFromRGB(colorRGB);
+				EList meta = f.getMetadata();
+				
+				boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+				boolean colorResult;
+				if(color==null)
+					colorResult=false;
+				else
+					// dont change array index here
+					colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+				
+				boolean warningResult;
+				
+				if(meta.size()>=4)
+				{
+					String val= (String) meta.get(3);
+					warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+				}
+				else
+				{
+
+					warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+				}
+				NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail();
+			
+		}
+	}
+	
+	@Test
+	public void test21()
+	{
+		try
+		{
+			int testCaseIndex=20;
+			EvaluationStrategy str = strategyMap.get(TestData.testCaseStrategy[testCaseIndex]);
+		    evalStrMan.setStrategy(str);
+
+		    FeatureDiagramImpl dia = diagramMap.get(TestData.testCaseDiagrams[testCaseIndex]);
+
+		    HashMap evals = evalStrMan.getEvaluations();
+		    HashMap<String, boolean[]> NodeTestResults = new HashMap<String, boolean[]>();
+		    //sv,color,warning
+		    HashMap<String, Boolean> LinkTestResults = new HashMap<String, Boolean>();
+		    
+			for(int i =0; i < TestData.testCaseNodes[testCaseIndex].length;i++)
+			{
+				if(TestData.testCaseNodes[testCaseIndex][i]==null)
+					break;
+				 	
+				FeatureImpl f =featureMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+				EList meta;
+				String color;
+				int sv;
+				if(f==null)
+				{
+					IntentionalElementImpl  ele= intentionalElementMap.get(TestData.testCaseNodes[testCaseIndex][i]);
+					boolean ig =evalStrMan.isIgnored(ele);
+					EvaluationImpl e = (EvaluationImpl) evals.get(ele);
+					sv = e.getEvaluation();
+					String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+				    color = getColorFromRGB(colorRGB);
+					meta = ele.getMetadata();
+					boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(ele.getName())[0])==sv;
+					boolean colorResult;
+					if(color==null)
+						colorResult=false;
+					else
+						// dont change array index here
+						colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(ele.getName())[1]);
+					
+					boolean warningResult;
+					
+					if(meta.size()>=4)
+					{
+						String val= (String) meta.get(3);
+						warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(ele.getName())[2].equals(val);		
+					}
+					else
+					{
+
+						warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(ele.getName())[2].equals("none");
+					}
+					NodeTestResults.put(ele.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				}
+				else
+				{
+					boolean ig =evalStrMan.isIgnored(f);
+					EvaluationImpl e = (EvaluationImpl) evals.get(f);
+					sv = e.getEvaluation();
+					String colorRGB =IntentionalElementEditPart.determineColor(urn,f, e, ig , 7);
+				    color = getColorFromRGB(colorRGB);
+					meta = f.getMetadata();
+					boolean satisfactionValueResult =Integer.parseInt(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[0])==sv;
+					boolean colorResult;
+					if(color==null)
+						colorResult=false;
+					else
+						// dont change array index here
+						colorResult = color.equals(TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[1]);
+					
+					boolean warningResult;
+					
+					if(meta.size()>=4)
+					{
+						String val= (String) meta.get(3);
+						warningResult= TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals(val);		
+					}
+					else
+					{
+
+						warningResult=TestData.expectedValuesForNodes.get(testCaseIndex).get(f.getName())[2].equals("none");
+					}
+					NodeTestResults.put(f.getName(),new boolean[]{satisfactionValueResult,colorResult,warningResult});
+				}
+				
+				//_userSetEvaluationWarning
+				
+			}
+			 
+			for(int i=0; i<TestData.testCaseLinks[testCaseIndex].length;i++)
+			{
+				boolean contributionValueResult;
+				if(TestData.testCaseLinks[testCaseIndex][i]==null)
+					break;
+				if(mandatoryLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					MandatoryFMLinkImpl l = mandatoryLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult= TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+				if(optionalLinkMap.containsKey(TestData.testCaseLinks[testCaseIndex][i]))
+				{
+					OptionalFMLinkImpl l = optionalLinkMap.get(TestData.testCaseLinks[testCaseIndex][i]);
+					contributionValueResult = TestData.expectedValuesForLinks.get(testCaseIndex).get(l.getName()).equals(l.getQuantitativeContribution());
+					LinkTestResults.put(l.getName(), contributionValueResult);
+				}
+			}
+		
+			boolean pass = true;
+			int testCaseNumber = testCaseIndex+1;
+			System.out.println("Results for test # "+testCaseNumber);
+			for (String node : NodeTestResults.keySet()) 
+			{
+				System.out.println("Node:"+node);
+				boolean[] results= NodeTestResults.get(node);
+				if(!results[0]||!results[1]||!results[2])
+					pass =false;
+				System.out.println("Results:"+Boolean.toString(results[0])+","+Boolean.toString(results[1])+","+Boolean.toString(results[2]));
+			}
+			for (String link : LinkTestResults.keySet()) 
+			{
+				System.out.println("Link:"+link);
+				boolean result= LinkTestResults.get(link);
+				if(!result)
+					pass = false;
+				System.out.println("Result:"+Boolean.toString(result));			
+			}
+			assertTrue(pass);
 		}
 		
 		catch (Exception e)
@@ -398,4 +2484,28 @@ public class FeatureModelStrategyAlgorithmTest
 	    	        System.out.println("File copied from " + src + " to " + dest);
 	    	}
 	    }
+	public static String getColorFromRGB(String rgb)
+	{
+		String[] all = rgb.split(",");
+		String r = all[0];
+		String g = all[1];
+		String b = all[2];
+		if(r.equals("169")&&g.equals("169")&&b.equals("169"))
+		{
+			return"grey";
+		}
+		if(r.equals("0")&&g.equals("255")&&b.equals("255"))
+		{
+			return "yellow";
+		}
+		if(r.equals("255")&&b.equals("96"))
+		{
+			return "yellow";
+		}
+		if(g.equals("255")&&b.equals("96"))
+		{
+			return "green";
+		}
+		return null;
+	}
 }

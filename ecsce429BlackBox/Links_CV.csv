@@ -1,8 +1,9 @@
+None,0
 Optional198,100
 Mandatory179,100
 Decomposition166,0
-Optional74,0,Optional75,0
-Optional74,100,Optional75,0
+Optional74,100,Optional75,100
+Optional74,100,Optional75,100
 Optional74,100,Optional75,100
 Mandatory60,50,Mandatory58,50
 Mandatory93,100,Optional91,0
@@ -17,3 +18,4 @@ Decomposition104,0,Decomposition105,0
 Mandatory60,50,Mandatory58,50
 Mandatory60,50,Mandatory58,50
 Mandatory60,50,Mandatory58,50
+Mandatory387,50,Mandatory386,50

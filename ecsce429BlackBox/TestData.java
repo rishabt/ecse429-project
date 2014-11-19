@@ -17,10 +17,6 @@ public class TestData
 	public static HashMap<Integer, HashMap<String, Integer>> expectedValuesForLinks;
 	public static String fileEL="C:/Users/Bernie/Desktop/Links_CV.csv";
 	
-	public static void loadDataForTest()
-	{
-		
-	}
 	
 	
 	public static void main(String[] args)
@@ -28,7 +24,7 @@ public class TestData
 		testCaseDiagrams = ReadCVS.readGraphNames(fileD, testCaseDiagrams);//format: every new line is a diagram name: line 
 		testCaseStrategy =ReadCVS.readStrategyNames(fileS, testCaseStrategy);//format: every new line is a strategy name
 		testCaseNodes= ReadCVS.readNodeNames(fileN, testCaseNodes);
-		testCaseLinks=ReadCVS.readLinkNames(fileS, testCaseLinks);
+		testCaseLinks=ReadCVS.readLinkNames(fileL, testCaseLinks);
 		expectedValuesForNodes=ReadCVS.readNodesValues(fileEN, expectedValuesForNodes);
 		expectedValuesForLinks = ReadCVS.readLinkValues(fileEL, expectedValuesForLinks);
 		
@@ -40,7 +36,7 @@ public class TestData
 		testCaseDiagrams = ReadCVS.readGraphNames(fileD, testCaseDiagrams);//format: every new line is a diagram name: line 
 		testCaseStrategy =ReadCVS.readStrategyNames(fileS, testCaseStrategy);//format: every new line is a strategy name
 		testCaseNodes= ReadCVS.readNodeNames(fileN, testCaseNodes);
-		testCaseLinks=ReadCVS.readLinkNames(fileS, testCaseLinks);
+		testCaseLinks=ReadCVS.readLinkNames(fileL, testCaseLinks);
 		expectedValuesForNodes=ReadCVS.readNodesValues(fileEN, expectedValuesForNodes);
 		expectedValuesForLinks = ReadCVS.readLinkValues(fileEL, expectedValuesForLinks);
 		
