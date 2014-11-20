@@ -1,7 +1,11 @@
 To run test:
 
-Copy all csv files to location of your choice.
-Then change the file name variables in the the TestData class to the absolute paths of the csv files.
+First import the ecse429BlackBox package into the jucmnav project. 
 
-copy project folder in location of your choice.
-Then change the variable externalTestProjectPath to the absolute path of the folder. 
+Then in the Testdata class update all the csv file paths(fileD,fileS,fileN,fileL,fileEn,fileEl)
+
+to the absolute paths pf the csvs' located in the ecse429BlackBox package.
+
+Then change the variable "externalTestProjectPath" the FeatureModelStrategyAlgorithmTest class the the absolute path of the TestSuite project,
+
+that is also included in the submission(this project contains the jucm file that is loaded for the test cases).
