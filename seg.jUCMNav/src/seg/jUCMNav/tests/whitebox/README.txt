@@ -2,11 +2,11 @@ To run the tests:
 
     1. Name the project to seg.jUCMNav.
 
-    2. Put the Tests.java file in package seg.jUCMNav.tests.commands (seg.jUCMNav/seg/jUCMNav/src/tests/commands)
+    2. Put the Tests.java file in package seg.jUCMNav.tests.commands (seg.jUCMNav/src/seg/jUCMNav/tests/commands)
 
     3. Put the test_file.jucm file in the main project folder.
 
-    4. Put the MockEvaluationStrategyManager.java file in package seg.jUCMNav.strategies (package seg.jUCMNav/seg/jUCMNav/src/strategies)
+    4. Put the MockEvaluationStrategyManager.java file in package seg.jUCMNav.strategies (package seg.jUCMNav/src/seg/jUCMNav/strategies)
 
     5. Run the tests as JUnit Plugin Test.
 
